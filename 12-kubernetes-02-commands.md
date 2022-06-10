@@ -231,7 +231,7 @@ Context "codeman-context" created.
 ```
 
 ```
-Редактируем файл конфигурации. Значение для certificate-authority-data берем из /etc/kubernetes/admin.conf
+Редактируем файл конфигурации ~/.kube/config. Значение для certificate-authority-data берем из /etc/kubernetes/admin.conf
 
 apiVersion: v1
 clusters:
