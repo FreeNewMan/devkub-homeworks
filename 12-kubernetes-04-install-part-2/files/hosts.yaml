@@ -1,0 +1,24 @@
+all:
+  hosts:
+    cp1:
+      ansible_host: 51.250.80.230
+      ansible_user: yc-user
+    node1:
+      ansible_host: 51.250.91.66
+      ansible_user: yc-user
+  children:
+    kube_control_plane:
+      hosts:
+        cp1:
+    kube_node:
+      hosts:
+        node1:
+    etcd:
+      hosts:
+        cp1:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}
