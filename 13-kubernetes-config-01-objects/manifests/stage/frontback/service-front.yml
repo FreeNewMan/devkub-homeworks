@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: stage
+spec:
+  ports:
+    - name: web
+      port: 8000
+      targetPort: 80
+      nodePort: 30081     
+  selector:
+    app: news
+  type: NodePort
