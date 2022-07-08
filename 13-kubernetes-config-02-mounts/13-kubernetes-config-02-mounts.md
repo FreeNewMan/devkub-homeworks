@@ -150,7 +150,7 @@ drwxr-xr-x 1 root root 4096 Jul  8 08:26 ..
 Создадим namespace prod
 ```
 kubectl create ns prod
-
+```
 
 
 в деплоймент бекэнда пропишем монтирование volume внутри контйнера по пути /static_bk.
