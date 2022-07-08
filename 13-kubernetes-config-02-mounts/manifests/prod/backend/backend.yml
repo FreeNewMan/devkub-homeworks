@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: backend
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - image: lutovp/test-backend:0.0.1
+          imagePullPolicy: IfNotPresent
+          name: backend
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - mountPath: "/static_bk"
+              name: my-volume            
+
+      volumes:
+        - name: my-volume
+          persistentVolumeClaim:
+            claimName: pvc2
+

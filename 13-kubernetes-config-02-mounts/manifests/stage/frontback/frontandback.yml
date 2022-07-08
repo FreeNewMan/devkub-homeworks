@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: news
+  name: news
+  namespace: stage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news
+  template:
+    metadata:
+      labels:
+        app: news
+    spec:
+      containers:
+        - image: lutovp/test-backend:0.0.1
+          imagePullPolicy: IfNotPresent
+          name: backend
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - mountPath: "/static_bk"
+              name: my-volume            
+        - image: lutovp/test-frontend:0.0.1
+          imagePullPolicy: IfNotPresent
+          name: frontend
+          ports:
+            - containerPort: 80    
+          volumeMounts:
+            - mountPath: "/static_fr"
+              name: my-volume               
+      volumes:
+        - name: my-volume
+          emptyDir: {}
