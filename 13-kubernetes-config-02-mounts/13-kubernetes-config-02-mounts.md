@@ -148,14 +148,14 @@ drwxr-xr-x 1 root root 4096 Jul  8 08:26 ..
 
 ### Ответ:
 Создадим namespace prod
-'''
+```
 kubectl create ns prod
-'''
+
 
 
 в деплоймент бекэнда пропишем монтирование volume внутри контйнера по пути /static_bk.
 В разделе volume пропишем ссылку на заявку выделения тома c названием pvc2.
-'''
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -188,7 +188,7 @@ spec:
           persistentVolumeClaim:
             claimName: pvc2
 
-'''
+```
 Для frontend аналогично. Сыылка на заявку та же pvc1.
 
 ```
