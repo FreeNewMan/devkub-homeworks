@@ -14,12 +14,12 @@
 
 ### Ответ:
 Создадим namespace stage
-'''
+```
 kubectl create ns stage
-'''
+```
 
 Внесем изменения в deployment. Укажем наличие тома my-volume типа emptyDir и укажем его в секции контейнеров. В контейнере backend укажем папку static_bk и  В контейнере frontend укажем папку static_ft. Файлы в них общими для обоих контйренров
-'''
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: my-volume
           emptyDir: {}
-'''
+```
 
 Применим деплоймент
 
