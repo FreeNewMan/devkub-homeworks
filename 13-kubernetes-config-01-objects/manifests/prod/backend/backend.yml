@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: backend
-  name: backend
+  name: backend-svc
   namespace: prod
 spec:
   replicas: 1
@@ -21,6 +21,8 @@ spec:
           name: backend
           ports:
             - containerPort: 9000
-
+          env:  
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@dbprod:5432/news"
 
 

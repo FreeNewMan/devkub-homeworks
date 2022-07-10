@@ -21,8 +21,10 @@ spec:
           name: backend
           ports:
             - containerPort: 9000
-        - image: lutovp/test-frontend:0.0.1
+        - image: lutovp/test-frontend:0.0.7
           imagePullPolicy: IfNotPresent
           name: frontend
           ports:
-            - containerPort: 80       
+            - containerPort: 80
+
+         

@@ -16,7 +16,7 @@ spec:
         app: frontend
     spec:
       containers:
-        - image: lutovp/test-frontend:0.0.1
+        - image: lutovp/test-frontend:0.0.7
           imagePullPolicy: IfNotPresent
           name: frontend
           ports:

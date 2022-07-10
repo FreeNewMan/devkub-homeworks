@@ -8,15 +8,21 @@
 * база данных — через statefulset.
 
 #### Ответ:
-1. Соберем frontend контейнер и загрузим его в репозиторий
+Фронтенд часть приложение написано на js. По описанию Dockerfile и файлу настроек config.js видно, что для доступа к данным нужен URL беэенда, переменная BASE_URL:
+
+Ее значение задаем в файле .env перед сборкой. Укажем там адрес кластера и порт через которые можно получить даныне бекенда
+
+BASE_URL=http://192.168.90.135:30090
+
+Соберем frontend контейнер и загрузим его в репозиторий
 ```
-docker build -t lutovp/test-frontend:0.0.1 .
+docker build -t lutovp/test-frontend:0.0.7 .
 ```
 ```
-docker push lutovp/test-frontend:0.0.1 
+docker push lutovp/test-frontend:0.0.7 
 ```
 ```
-devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/13-kubernetes-config/frontend$ docker build -t lutovp/test-frontend:0.0.1 .
+devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/13-kubernetes-config/frontend$ docker build -t lutovp/test-frontend:0.0.7 .
 Sending build context to Docker daemon  430.6kB
 Step 1/14 : FROM node:lts-buster as builder
  ---> b9f398d30e45
@@ -25,7 +31,7 @@ Step 2/14 : RUN mkdir /app
 
 ```
 ```
-devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/13-kubernetes-config/frontend$ docker push lutovp/test-frontend:0.0.1 
+devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/13-kubernetes-config/frontend$ docker push lutovp/test-frontend:0.0.7 
 The push refers to repository [docker.io/lutovp/test-frontend]
 206bf5621531: Pushed 
 069df5ac6784: Pushed 
@@ -40,7 +46,7 @@ d5b40e80384b: Pushed
 0.0.1: digest: sha256:b83697085a07a13a76a4dcbcb470359e01977a2358289c36954c655c638e1f30 size: 2401
 ```
 
-2. Соберем backend контейнер и загрузим его в репозиторий
+Соберем backend контейнер и загрузим его в репозиторий
 
 ```
 docker build -t lutovp/test-backend:0.0.1 .
@@ -79,12 +85,12 @@ e6fd4ebbaaab: Mounted from library/python
 0.0.1: digest: sha256:60c31aab3f08b69e1085cc2cf0031818478f8b2ad8b45a0c5ede5fb0cd818601 size: 3264
 
 ```
-3. Создадим Namespace stage
+ Создадим Namespace stage
 ```
 kubectl create ns stage
 ```
 
-4. Создадим манифесты для postgres. 
+Создадим манифесты для postgres. 
 
 
 ```
@@ -132,6 +138,7 @@ spec:
         ports:
         - containerPort: 5432
           name: postgresdb
+
 ```
 ```
 #service.yml Сервис нужен чтобы можно было подключиться из других подов и извне кластрера 
@@ -147,8 +154,7 @@ spec:
   ports:
   - port: 5432
     name: postgres
-    nodePort: 30432
-  type: NodePort 
+  type: ClusterIP 
   selector:
     app: postgres
 ```
@@ -158,10 +164,8 @@ spec:
 kubectl apply -f database/ -n stage
 ```
 
-В результате можно будет подключиться извне кластера к ноде где развернется statefulset по порту 30432 для проверки
 
 Создадим deployment для приложения:
-
 ```
 #frontandback.yml
 
@@ -188,49 +192,56 @@ spec:
           name: backend
           ports:
             - containerPort: 9000
-        - image: lutovp/test-frontend:0.0.1
+        - image: lutovp/test-frontend:0.0.7
           imagePullPolicy: IfNotPresent
           name: frontend
           ports:
-            - containerPort: 80       
+            - containerPort: 80
 
 ```
-Чтобы проверить работоспособность приложения создадим сервис типа NodePort для frontend
+Cоздадим сервис типа NodePort для frontend
 ```
+#service-front.yml
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: frontend-svc
   namespace: stage
 spec:
   ports:
     - name: web
       port: 8000
       targetPort: 80
-      nodePort: 30080     
+      protocol: TCP      
+      nodePort: 30080      
   selector:
     app: news
   type: NodePort
 
+
 ```
-Бэкенд работает на 9000 порту чтобы фронт на клиенте мог достучаться до бека нужен тоже сервис
+Бэкенд работает на 9000 порту. Чтобы бекенд был доступен по ранее указнному BASE_URL, сделам сервис типа NodePort и пропишем порт 30090
 ```
+service-back.yml
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: backend-svc
   namespace: stage
 spec:
   ports:
     - name: web
       port: 9000
-      targetPort: 9000  
+      targetPort: 9000
+      protocol: TCP      
+      nodePort: 30090            
   selector:
     app: news
-  type: ClusterIP
+  type: NodePort
+
 ```
-Кроме того нужно сделать port forwarding так как фронт обращается к беку на локалхост на 9000 порт
 
 Применим манифесты:
 ```
@@ -241,17 +252,21 @@ kubectl apply -f frontback/ -n stage
 В результате получаем:
 ```
 devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/stage$ kubectl get pods -n stage
-NAME                     READY   STATUS    RESTARTS     AGE
-news-85d798c67-79hlg     2/2     Running   0            8h
-postgres-statefulset-0   1/1     Running   1 (8h ago)   24h
+NAME                         READY   STATUS    RESTARTS      AGE
+multitool-5958664c8b-6869f   1/1     Running   1 (95m ago)   20h
+news-86c7cd5c7-rlltx         2/2     Running   0             2m57s
+postgres-statefulset-0       1/1     Running   1 (95m ago)   20h
 ```
 
 ```
 devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/stage$ kubectl get services -n stage
-NAME       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)           AGE
-db         NodePort    10.233.46.236   <none>        5432:30432/TCP    23h
-frontend   NodePort    10.233.55.240   <none>        8000:30080/TCP    8h
-news       ClusterIP   10.233.44.31    <none>        9000/TCP,80/TCP   23h
+> kubectl get services -n stage
+NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)           AGE
+backend-svc    NodePort    10.233.35.249   <none>        9000:30090/TCP    2m24s
+db             ClusterIP   10.233.5.240    <none>        5432/TCP          20h
+frontend-svc   NodePort    10.233.60.106   <none>        8000:30080/TCP    2m24s
+multitool      ClusterIP   10.233.15.247   <none>        80/TCP            20h
+news           ClusterIP   10.233.46.13    <none>        9000/TCP,80/TCP   6h2m
 ```
 
 ```
@@ -263,17 +278,6 @@ news   1/1     1            1           23h
 пробуем подключиться
 ![image info](images/pic1.png)
 
-Сделаем port-forward для деплоймента чтобы фронт увидел бэк по localhost:9000
-
-```
-kubectl port-forward deployments/news 9000:9000 -n stage
-
-devuser@devuser-virtual-machine:~/home_works/13-kubernetes-config-01-objects/stage$ kubectl port-forward deployments/news 9000:9000 -n stage
-Forwarding from 127.0.0.1:9000 -> 9000
-Forwarding from [::1]:9000 -> 9000
-Handling connection for 9000
-```
-![image info](images/pic2.png)
 
 # Задание 2: подготовить конфиг для production окружения
 Следующим шагом будет запуск приложения в production окружении. Требования сложнее:
@@ -282,10 +286,192 @@ Handling connection for 9000
 * в окружении фронта прописан адрес сервиса бекенда;
 * в окружении бекенда прописан адрес сервиса базы данных.
 
-1. Создадим Namespace prod
+На prod будем открывать во внешний мир те же порты 30080 и 30090. 
+
+Чтобы не было конфликтов удаляем namespace stage
+
+
+Создадим Namespace prod
 ```
 kubectl create ns prod
 ```
+Для базы данных манифесты будут те же, за исключеним названия сервиса. В  stage было db, в prod сделаем dbprod. Чтобы было отличие от значние по умолчанию указанное в контейнере backend
+
+```
+#configmap.yml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-configuration
+  namespace: prod  
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: news
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+```
+
+```
+#statefulset.yml
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+  namespace: prod  
+  labels:
+    app: postgres
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13-alpine
+        envFrom:
+        - configMapRef:
+            name: postgres-configuration
+        ports:
+        - containerPort: 5432
+          name: postgresdb
+
+```
+
+```
+#service.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbprod
+  namespace: prod
+  labels:
+    app: postgres
+spec:
+  ports:
+  - port: 5432
+    name: postgres
+  type: ClusterIP 
+  selector:
+    app: postgres
+```
+
+Манифесты для backend
+Пропишем переменную окружения для связи с базой указав в ней имя сервиса dbprod
+DATABASE_URL
+```
+#backend.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: backend-svc
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - image: lutovp/test-backend:0.0.1
+          imagePullPolicy: IfNotPresent
+          name: backend
+          ports:
+            - containerPort: 9000
+          env:  
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@dbprod:5432/news"
+```
+
+Сервис для backend
+```
+#service.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: prod
+spec:
+  ports:
+    - name: web
+      port: 9000
+      targetPort: 9000  
+      nodePort: 30090            
+  selector:
+    app: backend
+  type: NodePort
+```
+
+
+Манифесты для frontend
+```
+#frontend.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: frontend
+  name: frontend
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - image: lutovp/test-frontend:0.0.7
+          imagePullPolicy: IfNotPresent
+          name: frontend
+          ports:
+            - containerPort: 80       
+
+```
+
+Сервис для frontend
+
+```
+#service.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: prod
+spec:
+  ports:
+    - name: web
+      port: 8000
+      targetPort: 80
+      nodePort: 30080    
+  selector:
+    app: frontend
+  type: NodePort
+
+```
+В итоге получаем:
 
 Манифесты для базы: `manifests/prod/database/` 
 
@@ -303,12 +489,21 @@ kubectl apply -f backend/
 kubectl apply -f frontend/ 
 ```
 
-
-Пробрасываем наружу бекенд
-
 ```
-kubectl port-forward deployments/backend 9000:9000 -n prod
+Every 2.0s: kubectl get pods,service -n prod                          opsserver: Sun Jul 10 19:58:02 2022
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/backend-svc-775d99f5fb-d9fzd   1/1     Running   0          28m
+pod/frontend-5867f477d-mqmcp       1/1     Running   0          38m
+pod/postgres-statefulset-0         1/1     Running   0          28m
+
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/backend        NodePort    10.233.39.52    <none>        9000:30090/TCP   28m
+service/dbprod         ClusterIP   10.233.47.230   <none>        5432/TCP         28m
+service/frontend-svc   NodePort    10.233.35.210   <none>        8000:30080/TCP   39m
 ```
+
+
 
 ## Задание 3 (*): добавить endpoint на внешний ресурс api
 Приложению потребовалось внешнее api, и для его использования лучше добавить endpoint в кластер, направленный на это api. Требования:
