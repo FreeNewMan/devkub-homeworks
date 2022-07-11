@@ -160,23 +160,23 @@ deployment.apps/frontend scaled
 
 
 ```
-Every 2.0s: kubectl get po,svc -n prod                                                                                 opsserver: Mon Jul 11 16:30:45 2022
+Every 2.0s: kubectl get po,svc -n prod -o wide                                                                        opsserver: Mon Jul 11 17:34:36 2022
 
-NAME                             READY   STATUS    RESTARTS      AGE
-pod/backend-775d99f5fb-b2pxt     1/1     Running   0             52s
-pod/backend-775d99f5fb-k7mvs     1/1     Running   0             20m
-pod/backend-775d99f5fb-xjvrw     1/1     Running   0             52s
-pod/frontend-5867f477d-gqgk7     1/1     Running   1 (72m ago)   5h13m
-pod/frontend-5867f477d-h5pqs     1/1     Running   0             32s
-pod/frontend-5867f477d-x7nhn     1/1     Running   0             32s
-pod/multitool-5958664c8b-7l4zp   1/1     Running   0             14m
-pod/postgres-statefulset-0       1/1     Running   1 (72m ago)   5h13m
+NAME                             READY   STATUS    RESTARTS       AGE     IP             NODE    NOMINATED NODE   READINESS GATES
+pod/backend-775d99f5fb-4r6gw     1/1     Running   0              52s     10.233.90.44   node1   <none>           <none>
+pod/backend-775d99f5fb-jw77c     1/1     Running   0              52s     10.233.90.45   node1   <none>           <none>
+pod/backend-775d99f5fb-k7mvs     1/1     Running   0              84m     10.233.96.45   node2   <none>           <none>
+pod/frontend-5867f477d-2zlkc     1/1     Running   0              61s     10.233.90.42   node1   <none>           <none>
+pod/frontend-5867f477d-x7nhn     1/1     Running   0              64m     10.233.96.47   node2   <none>           <none>
+pod/frontend-5867f477d-zscx9     1/1     Running   0              61s     10.233.90.43   node1   <none>           <none>
+pod/multitool-5958664c8b-7l4zp   1/1     Running   0              78m     10.233.96.46   node2   <none>           <none>
+pod/postgres-statefulset-0       1/1     Running   1 (136m ago)   6h17m   10.233.96.42   node2   <none>           <none>
 
-NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
-service/backend-svc    NodePort    10.233.61.246   <none>        9000:30090/TCP   20m
-service/dbprod         ClusterIP   10.233.7.219    <none>        5432/TCP         5h13m
-service/frontend-svc   NodePort    10.233.17.12    <none>        8000:30080/TCP   5h13m
-service/multitool      ClusterIP   10.233.48.97    <none>        80/TCP           14m
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+service/backend-svc    NodePort    10.233.61.246   <none>        9000:30090/TCP   84m     app=backend
+service/dbprod         ClusterIP   10.233.7.219    <none>        5432/TCP         6h17m   app=postgres
+service/frontend-svc   NodePort    10.233.17.12    <none>        8000:30080/TCP   6h17m   app=frontend
+service/multitool      ClusterIP   10.233.48.97    <none>        80/TCP           78m     app=multitool
 
 ```
 
@@ -190,20 +190,21 @@ deployment.apps/frontend scaled
 ```
 
 ```
-Every 2.0s: kubectl get po,svc -n prod                                                                                 opsserver: Mon Jul 11 16:31:59 2022
+Every 2.0s: kubectl get po,svc -n prod -o wide                                                                        opsserver: Mon Jul 11 17:35:42 2022
 
-NAME                             READY   STATUS    RESTARTS      AGE
-pod/backend-775d99f5fb-k7mvs     1/1     Running   0             21m
-pod/frontend-5867f477d-x7nhn     1/1     Running   0             106s
-pod/multitool-5958664c8b-7l4zp   1/1     Running   0             15m
-pod/postgres-statefulset-0       1/1     Running   1 (73m ago)   5h15m
+NAME                             READY   STATUS        RESTARTS       AGE     IP             NODE    NOMINATED NODE   READINESS GATES
+pod/backend-775d99f5fb-4r6gw     1/1     Terminating   0              119s    10.233.90.44   node1   <none>           <none>
+pod/backend-775d99f5fb-jw77c     1/1     Terminating   0              119s    10.233.90.45   node1   <none>           <none>
+pod/backend-775d99f5fb-k7mvs     1/1     Running       0              85m     10.233.96.45   node2   <none>           <none>
+pod/frontend-5867f477d-x7nhn     1/1     Running       0              65m     10.233.96.47   node2   <none>           <none>
+pod/multitool-5958664c8b-7l4zp   1/1     Running       0              79m     10.233.96.46   node2   <none>           <none>
+pod/postgres-statefulset-0       1/1     Running       1 (137m ago)   6h18m   10.233.96.42   node2   <none>           <none>
 
-NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
-service/backend-svc    NodePort    10.233.61.246   <none>        9000:30090/TCP   21m
-service/dbprod         ClusterIP   10.233.7.219    <none>        5432/TCP         5h15m
-service/frontend-svc   NodePort    10.233.17.12    <none>        8000:30080/TCP   5h14m
-service/multitool      ClusterIP   10.233.48.97    <none>        80/TCP           15m
-
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+service/backend-svc    NodePort    10.233.61.246   <none>        9000:30090/TCP   85m     app=backend
+service/dbprod         ClusterIP   10.233.7.219    <none>        5432/TCP         6h18m   app=postgres
+service/frontend-svc   NodePort    10.233.17.12    <none>        8000:30080/TCP   6h18m   app=frontend
+service/multitool      ClusterIP   10.233.48.97    <none>        80/TCP           79m     app=multitool
 
 ```
 ---
