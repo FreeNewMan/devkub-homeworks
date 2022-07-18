@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: {{ .Values.back.deploymentName }} 
+  namespace: {{ .Values.namespace }}    
+spec:
+  replicas: {{ .Values.back.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - image:  {{ .Values.back.image.repository }}:{{ .Values.back.image.tag }} 
+          imagePullPolicy: IfNotPresent
+          name: backend
+          ports:
+            - containerPort: {{ .Values.back.port }}
+          env:
+            - name: DATABASE_URL
+              value: postgres://{{ .Values.db.credentials.POSTGRES_USER }}:{{ .Values.db.credentials.POSTGRES_PASSWORD }}@{{ .Values.db.serviceName }}:{{ .Values.db.port }}/{{ .Values.db.credentials.POSTGRES_DB }} 
+

@@ -1,0 +1,41 @@
+namespace: app1
+
+configMap:
+  name: postgres-configuration
+
+db:
+  replicaCount: 1
+  statefulSetName: postgres-statefulset1
+  serviceName: dbprod1
+  image: 
+    repository: postgres
+    tag: 13-alpine
+  port: 5432
+  credentials:
+    POSTGRES_DB: news
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+
+back:
+  replicaCount: 1
+  deploymentName: backend1
+  serviceName: backend-svc1
+  image: 
+    repository:  lutovp/test-backend
+    tag: 0.0.1 
+  port: 9000
+  nodePort: 30090
+
+front: 
+  replicaCount: 1
+  deploymentName: frontend1 
+  serviceName: frontend-svc1
+  image: 
+    repository:  lutovp/test-frontend
+    tag: 0.0.7 
+  port: 8000
+  targetPort: 80
+  nodePort: 30080
+
+
+  
