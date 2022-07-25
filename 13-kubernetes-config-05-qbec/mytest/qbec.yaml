@@ -1,0 +1,17 @@
+apiVersion: qbec.io/v1alpha1
+kind: App
+metadata:
+  name: mytest
+spec:
+  environments:
+    stage:
+      defaultNamespace: stage
+      server: https://192.168.90.135:6443
+    prod:
+      defaultNamespace: prod
+      server: https://192.168.90.135:6443
+      includes:
+        - myip     
+  vars: {}
+  excludes:
+    - myip
